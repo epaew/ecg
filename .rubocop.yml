@@ -1,0 +1,10 @@
+AllCops:
+  TargetRubyVersion: 2.4
+  Exclude:
+    - ecg.gemspec
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented_relative_to_receiver
+Metrics/MethodLength:
+  Max: 15
+Style/Documentation:
+  Enabled: false
