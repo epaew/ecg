@@ -15,6 +15,8 @@ module ECG
     end
 
     def parse!
+      print_help(false) if @args.empty?
+
       parser.parse!(@args)
       print_help(false) if @args.length > 1
 
