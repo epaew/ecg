@@ -7,7 +7,7 @@ module ECG
       @store = map.to_h
     end
 
-    def initialize_copy
+    def initialize_copy(obj)
       super
       @store = @store.dup
     end
@@ -17,8 +17,8 @@ module ECG
     end
 
     def inspect
-      detail = @store.map { |k, v| " #{k}=#{v.inspect}" }.join(',')
-      "#<#{self.class}#{detail}>"
+      detail = @store.map { |k, v| " @#{k}=#{v.inspect}" }.join(',')
+      "#<#{self.class}:#{object_id << 1}#{detail}>"
     end
 
     def method_missing(name, *args)
@@ -27,22 +27,29 @@ module ECG
       if @store.key?(name)
         transform_value(@store[name])
       elsif @store.respond_to?(name)
-        @store.public_send(name)
+        @store.public_send(name, *args)
       else
         super
       end
     end
 
     def respond_to_missing?(symbol, include_private = false)
-      @store&.key?(symbol.to_sym) || super
+      symbol = symbol.to_sym
+
+      @store.key?(symbol) || @store.respond_to?(symbol) || super
     end
 
     def to_h
-      @store.transform_values do |v|
-        case v
-        when self.class then v.to_h
-        when Array then v.map(&:to_h)
-        else v
+      @store.transform_values do |value|
+        case value
+        when self.class
+          value.to_h
+        when Array
+          value.map do |element|
+            element.respond_to?(:to_h) ? element.to_h : element
+          end
+        else
+          value
         end
       end
     end
