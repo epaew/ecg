@@ -16,7 +16,7 @@ jobs:
     - name: Set up Ruby
       uses: actions/setup-ruby@v1
       with:
-        version: 2.6.x
+        ruby-version: 2.6.x
     - name: Publish to RubyGems
       run: |
         mkdir -p $HOME/.gem
@@ -25,4 +25,17 @@ jobs:
         printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
         rake gem:push
       env:
-        GEM_HOST_API_KEY: ${{secrets.RUBYGEMS_AUTH_TOKEN}}
+        GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_AUTH_TOKEN }}
+    - name: Get gem version
+      id: get_version
+      run: ruby -r './lib/ecg/version.rb' -e 'puts %(##[set-output name=version;]"#{ECG::VERSION}")'
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@master
+      env:
+        GITHUB_TOKEN: ${{ sectets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        release_name: Release ${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: false
