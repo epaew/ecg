@@ -9,7 +9,7 @@ module ECG
   class OptionParser
     attr_reader :args, :option
 
-    def initialize(args)
+    def initialize(args = [])
       @args = args
       @option = {}
     end
