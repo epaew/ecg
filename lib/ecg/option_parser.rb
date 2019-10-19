@@ -62,6 +62,10 @@ module ECG
           key, value = str.split('=', 2)
           @option[key] = value
         end
+        opt.on('-V', '--version', 'Print version information') do
+          puts "#{File.basename($PROGRAM_NAME)} #{ECG::VERSION}"
+          exit
+        end
         opt.on('-h', '--help', 'Print this help message', &method(:print_help))
       end
     end
