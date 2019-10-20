@@ -59,8 +59,7 @@ module ECG
           Set the key-value mapping to be embedded in the template.
         __DESC__
 
-          key, value = str.split('=', 2)
-          @option[key] = value
+          set_option_value(*str.split('=', 2))
         end
         opt.on('-V', '--version', 'Print version information') do
           puts "#{File.basename($PROGRAM_NAME)} #{ECG::VERSION}"
@@ -73,6 +72,39 @@ module ECG
     def print_help(bool)
       warn parser.help
       exit bool
+    end
+
+    def set_option_value(key, value)
+      keys = key.split('.').map(&:to_sym)
+      if keys.count == 1
+        set_single_option_value(keys.first, value)
+      else
+        set_nested_option_value(keys, value)
+      end
+    end
+
+    def set_single_option_value(key, value)
+      if @option[key].is_a? Hash
+        raise ArgumentError, 'Reaf keys cannot have own value.'
+      end
+
+      @option[key] = value
+      @option
+    end
+
+    def set_nested_option_value(keys, value)
+      last_key = keys.pop
+
+      nested = keys.inject(@option) do |result, key|
+        result[key] ||= {}
+        unless result[key].is_a? Hash
+          raise ArgumentError, 'Reaf keys cannot have own value.'
+        end
+
+        result[key]
+      end
+      nested[last_key] = value
+      @option
     end
   end
 end

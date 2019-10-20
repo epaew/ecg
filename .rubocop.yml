@@ -4,7 +4,15 @@ AllCops:
     - ecg.gemspec
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented_relative_to_receiver
+Metrics/BlockLength:
+  Exclude:
+    - test/**/*.rb
+Metrics/ClassLength:
+  Exclude:
+    - test/**/*.rb
 Metrics/MethodLength:
   Max: 15
+Style/AndOr:
+  EnforcedStyle: conditionals
 Style/Documentation:
   Enabled: false

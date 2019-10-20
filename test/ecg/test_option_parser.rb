@@ -40,17 +40,54 @@ module ECG
       end
     end
 
-    sub_test_case 'parse named argument `--values`' do
+    sub_test_case 'parse named argument' do
       def test_parse_short_named_values
         result = parse('-v', 'key=value')
-        assert_equal(result.class, Store)
-        assert_equal(result.to_h, key: 'value')
+        assert_equal(result, Store.new(key: 'value'))
       end
 
       def test_parse_long_named_values
         result = parse('--values', 'key=value')
-        assert_equal(result.class, Store)
-        assert_equal(result.to_h, key: 'value')
+        assert_equal(result, Store.new(key: 'value'))
+      end
+    end
+
+    sub_test_case 'parse named argument with key includes `.`' do
+      def test_parse_valid_nested_values
+        result = parse('-v', 'nest1.nest2.nest3=value')
+        assert_equal(result,
+                     Store.new(nest1: { nest2: { nest3: 'value' } }))
+      end
+
+      def test_parse_multiple_valid_nested_values
+        result = parse('-v', 'key=value',
+                       '-v', 'nest1.nest2.nest3.key=value',
+                       '-v', 'nest1.key=value',
+                       '-v', 'nest1.nest2.key=value')
+
+        assert_equal(
+          result,
+          Store.new(key: 'value',
+                    nest1: { key: 'value',
+                             nest2: { key: 'value',
+                                      nest3: { key: 'value' } } })
+        )
+      end
+    end
+
+    sub_test_case 'parse named invalid argument with key includes `.`' do
+      def test_parse_invalid_nested_values
+        assert_raise(ArgumentError) do
+          parse('-v', 'nest1=value',
+                '-v', 'nest1.nest2.nest3=value')
+        end
+      end
+
+      def test_parse_invalid_nested_values_rev
+        assert_raise(ArgumentError) do
+          parse('-v', 'nest1.nest2.nest3=value',
+                '-v', 'nest1=value')
+        end
       end
     end
 
@@ -77,14 +114,12 @@ module ECG
 
       def test_parse_with_single_json_file
         result = parse(@json_config)
-        assert_equal(result.class, Store)
-        assert_equal(result.to_h, name: 'epaew')
+        assert_equal(result, Store.new(name: 'epaew'))
       end
 
       def test_parse_with_single_yaml_file
         result = parse(@yaml_config)
-        assert_equal(result.class, Store)
-        assert_equal(result.to_h, name: 'epaew')
+        assert_equal(result, Store.new(name: 'epaew'))
       end
 
       def test_parse_with_single_toml_file
