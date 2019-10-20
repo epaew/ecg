@@ -14,7 +14,10 @@ Ruby: 2.4 or higher
 gem install ecg
 ```
 
-## Simple Usage
+## Usage
+See also `ecg --help`
+
+### Simple example
 ```sh
 ecg --values name=epaew --values email="epaew.333@gmail.com" < template.json.erb
 {
@@ -45,6 +48,89 @@ with
     ```yaml
     name: epaew
     email: epaew.333@gmail.com
+    ```
+
+### Using nested keys
+```sh
+ecg --values user.name=epaew --values user.email="epaew.333@gmail.com" < template.json.erb
+{
+  "user": {
+    "name": "epaew",
+    "email": "epaew.333@gmail.com"
+  }
+}
+```
+or
+```sh
+ecg config.yml < template.json.erb
+{
+  "user": {
+    "name": "epaew",
+    "email": "epaew.333@gmail.com"
+  }
+}
+```
+with
+* template.json.erb
+    ```json
+    {
+      "user": {
+        "name": "<%= user.name %>",
+        "email": "<%= user.email %>"
+      }
+    }
+    ```
+* config.yml
+    ```yaml
+    user:
+      name: epaew
+      email: epaew.333@gmail.com
+    ```
+
+### Using array (JSON and YAML only)
+```sh
+ecg config.yml < template.json.erb
+{
+  "user": [
+    {
+      "name": "Kurimu"
+    },
+    {
+      "name": "Chizuru"
+    },
+    {
+      "name": "Minatsu"
+    },
+    {
+      "name": "Mahuyu"
+    }
+  ]
+}
+```
+with
+* template.json.erb
+    ```json
+    {
+      "user": [
+    <% users.each_with_index do |user, i| %>
+        {
+          "name": "<%= user.name %>"
+    <% unless i == users.count - 1 %>
+        },
+    <% else %>
+        }
+    <% end %>
+    <% end %>
+      ]
+    }
+    ```
+* config.yml
+    ```yaml
+    users:
+      - name: Kurimu
+      - name: Chizuru
+      - name: Minatsu
+      - name: Mahuyu
     ```
 
 ## License
