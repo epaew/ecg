@@ -40,18 +40,7 @@ module ECG
     end
 
     def to_h
-      @store.transform_values do |value|
-        case value
-        when self.class
-          value.to_h
-        when Array
-          value.map do |element|
-            element.respond_to?(:to_h) ? element.to_h : element
-          end
-        else
-          value
-        end
-      end
+      @store.transform_values(&method(:intransform_value))
     end
 
     def to_json(*args)
@@ -59,7 +48,24 @@ module ECG
       to_h.to_json(args)
     end
 
+    def ==(other)
+      return false unless other.is_a?(self.class)
+
+      to_h == other.to_h
+    end
+
     private
+
+    def intransform_value(value)
+      case value
+      when self.class
+        value.to_h
+      when Array
+        value.map(&method(:intransform_value))
+      else
+        value
+      end
+    end
 
     def transform_value(value)
       case value

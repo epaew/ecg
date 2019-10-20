@@ -8,25 +8,21 @@ module ECG
       @store = Store.new(key: 'value')
     end
 
-    sub_test_case '#initialize / #to_h' do # rubocop:disable Metrics/BlockLength
+    sub_test_case '#initialize' do
       def test_initialize_no_collection
-        assert_equal(@store.key, 'value')
-        assert_equal(@store.to_h, key: 'value')
+        assert_equal(@store, Store.new(key: 'value'))
       end
 
       def test_initialize_array
         @store = Store.new(key: %w[value1 value2])
 
-        assert_equal(@store.key, %w[value1 value2])
-        assert_equal(@store.to_h, key: %w[value1 value2])
+        assert_equal(@store, Store.new(key: %w[value1 value2]))
       end
 
       def test_initialize_hash
         @store = Store.new(key: { nested_key: 'nested_value' })
 
-        assert_equal(@store.key.class, Store)
-        assert_equal(@store.key.to_h, nested_key: 'nested_value')
-        assert_equal(@store.to_h, key: { nested_key: 'nested_value' })
+        assert_equal(@store.key, Store.new(nested_key: 'nested_value'))
       end
 
       def test_initialize_hash_in_array
@@ -34,17 +30,18 @@ module ECG
           [{ nested_key1: 'nested_value1' }, { nested_key2: 'nested_value2' }]
         @store = Store.new(key: array_of_hash)
 
-        assert_equal(@store.key.map(&:class), [Store, Store])
-        assert_equal(@store.key.map(&:to_h), array_of_hash)
-        assert_equal(@store.to_h, key: array_of_hash)
+        assert_equal(@store.key,
+                     [Store.new(nested_key1: 'nested_value1'),
+                      Store.new(nested_key2: 'nested_value2')])
       end
     end
 
     sub_test_case '#initialize_copy' do
       def test_dup
         store_dup = @store.dup
-        assert_not_equal(store_dup, @store)
-        assert_equal(store_dup.to_h, @store.to_h)
+
+        assert_equal(store_dup, @store)            # check each key/value set
+        refute(store_dup.to_h.equal?(@store.to_h)) # check different instance?
       end
     end
 
@@ -70,6 +67,36 @@ module ECG
         assert_equal(@store.key, 'value')             # key?
         assert_equal(@store[:key], 'value')           # respond_to?
         assert_raise(NoMethodError) { @store.no_key } # else
+      end
+    end
+
+    sub_test_case '#to_h' do
+      def test_to_h_no_collection
+        assert_equal(@store.to_h, key: 'value')
+      end
+
+      def test_to_h_array
+        @store = Store.new(key: %w[value1 value2])
+
+        assert_equal(@store.to_h, key: %w[value1 value2])
+      end
+
+      def test_to_h_hash
+        @store = Store.new(key: { nested_key: 'nested_value' })
+
+        assert_equal(@store.to_h, key: { nested_key: 'nested_value' })
+      end
+
+      def test_to_h_hash_in_array
+        array_of_hash =
+          [{ nested_key1: 'nested_value1' }, { nested_key2: 'nested_value2' }]
+        @store = Store.new(key: array_of_hash)
+
+        assert_equal(@store.to_h,
+                     key: [
+                       { nested_key1: 'nested_value1' },
+                       { nested_key2: 'nested_value2' }
+                     ])
       end
     end
 
