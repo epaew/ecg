@@ -1,26 +1,21 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require_relative 'store'
+require_relative 'context'
+require_relative 'version'
 
 module ECG
-  class LoadError < ::StandardError; end
-
   class OptionParser
-    attr_reader :args, :option
-
     def initialize(args = [])
       @args = args
-      @option = {}
+      @options = { filepath: nil, trim_mode: '<>', values: {} }
     end
 
-    def parse!
-      print_help(false) if @args.empty?
+    def context
+      return @context if instance_variable_defined?(:@context)
 
-      parser.parse!(@args)
-      print_help(false) if @args.length > 1
-
-      Store.new(hash)
+      parse!
+      @context = Context.new(@options)
     end
 
     private
@@ -31,29 +26,32 @@ module ECG
       __BANNER__
     end
 
-    def hash
-      hash = @args.empty? ? {} : load_file(@args.first)
+    def filepath
+      print_help(false) if @args.length > 1
+      return nil if @args.empty?
 
-      hash.merge(@option)
-    end
-
-    def load_file(path)
-      case File.extname(path)
-      when '.json'
-        require 'json'
-        File.open(path) { |f| JSON.parse(f.read) }
-      when /\A\.ya?ml\z/
-        require 'yaml'
-        File.open(path) { |f| YAML.safe_load(f.read, [], [], true) }
-      else
+      path = @args.first
+      extname = File.extname(path)
+      if %w[.json .yml .yaml].none? { |ext| ext == extname }
         raise ArgumentError,
               "Cannot load file `#{path}`. Only JSON/YAML are allowed."
       end
+
+      path
     end
 
-    def parser
+    def parse!
+      print_help(false) if @args.empty?
+
+      parser.parse!(@args)
+      @options[:filepath] = filepath
+      self
+    end
+
+    def parser # rubocop:disable Style/MethodLength
       ::OptionParser.new do |opt|
         opt.banner = banner
+        opt.version = VERSION
 
         opt.on('-v', '--values Key=Value', <<~__DESC__) do |str|
           Set the key-value mapping to be embedded in the template.
@@ -61,8 +59,13 @@ module ECG
 
           set_option_value(*str.split('=', 2))
         end
+        opt.on('-t', '--trim-mode MODE', <<~__DESC__) do |v|
+          Set ERB's trim_mode. Default is "<>".
+        __DESC__
+          @options[:trim_mode] = v
+        end
         opt.on('-V', '--version', 'Print version information') do
-          puts "#{File.basename($PROGRAM_NAME)} #{ECG::VERSION}"
+          puts opt.ver
           exit
         end
         opt.on('-h', '--help', 'Print this help message', &method(:print_help))
@@ -84,18 +87,20 @@ module ECG
     end
 
     def set_single_option_value(key, value)
-      if @option[key].is_a? Hash
+      values = @options[:values]
+      if values[key].is_a? Hash
         raise ArgumentError, 'Reaf keys cannot have own value.'
       end
 
-      @option[key] = value
-      @option
+      values[key] = value
+      values
     end
 
     def set_nested_option_value(keys, value)
+      values = @options[:values]
       last_key = keys.pop
 
-      nested = keys.inject(@option) do |result, key|
+      nested = keys.inject(values) do |result, key|
         result[key] ||= {}
         unless result[key].is_a? Hash
           raise ArgumentError, 'Reaf keys cannot have own value.'
@@ -104,7 +109,7 @@ module ECG
         result[key]
       end
       nested[last_key] = value
-      @option
+      values
     end
   end
 end

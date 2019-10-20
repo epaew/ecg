@@ -5,6 +5,7 @@ require 'test_helper'
 module ECG
   class TestCommand < Test::Unit::TestCase
     setup do
+      @stdin = $stdin
       $stdout = @stdout = StringIO.new
       $stderr = @stderr = StringIO.new
     end
@@ -20,7 +21,7 @@ module ECG
           {"name":"<%= name %>"}
         __ERB__
 
-        run_command(['--values', 'name=epaew'])
+        run_command('--values', 'name=epaew')
         assert_equal(@stdout.string, <<~__RESULT__)
           {"name":"epaew"}
         __RESULT__
@@ -36,7 +37,7 @@ module ECG
 
     private
 
-    def run_command(args = [])
+    def run_command(*args)
       @command = Command.new(args)
       @command.execute(@stdin, @stdout)
     end
