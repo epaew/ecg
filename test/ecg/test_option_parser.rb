@@ -5,11 +5,15 @@ require 'test_helper'
 module ECG
   class TestOptionParser < Test::Unit::TestCase
     setup do
+      @original_argv = ARGV
       $stdout = @stdout = StringIO.new
       $stderr = @stderr = StringIO.new
     end
 
     teardown do
+      Object.send(:remove_const, :ARGV)
+      Object.const_set(:ARGV, @original_argv)
+
       $stdout = STDOUT
       $stderr = STDERR
     end
@@ -17,24 +21,24 @@ module ECG
     sub_test_case 'print help to stderr' do
       def test_print_help_with_short_argument
         assert_raise(SystemExit) { parse('-h') }
-        assert_equal(@stderr.string, @parser.send(:parser).help)
+        assert_equal(@stderr.string, @parser.help)
       end
 
       def test_print_help_with_long_argument
         assert_raise(SystemExit) { parse('--help') }
-        assert_equal(@stderr.string, @parser.send(:parser).help)
+        assert_equal(@stderr.string, @parser.help)
       end
     end
 
     sub_test_case 'print version to stdout' do
       def test_print_version_with_short_argument
         assert_raise(SystemExit) { parse('-V') }
-        assert_equal(@stdout.string.chomp, @parser.send(:parser).ver)
+        assert_equal(@stdout.string.chomp, @parser.ver)
       end
 
       def test_print_version_with_long_argument
         assert_raise(SystemExit) { parse('--version') }
-        assert_equal(@stdout.string.chomp, @parser.send(:parser).ver)
+        assert_equal(@stdout.string.chomp, @parser.ver)
       end
     end
 
@@ -102,7 +106,7 @@ module ECG
     sub_test_case 'parse no arguments' do
       def test_parse_with_no_arguments
         assert_raise(SystemExit) { parse }
-        assert_equal(@stderr.string, @parser.send(:parser).help)
+        assert_equal(@stderr.string, @parser.help)
       end
     end
 
@@ -141,14 +145,17 @@ module ECG
 
       def test_parse_with_two_or_more_arguments
         assert_raise(SystemExit) { parse(@json_config, @yaml_config) }
-        assert_equal(@stderr.string, @parser.send(:parser).help)
+        assert_equal(@stderr.string, @parser.help)
       end
     end
 
     private
 
     def parse(*args)
-      @parser = OptionParser.new(args)
+      Object.send(:remove_const, :ARGV)
+      Object.const_set(:ARGV, args)
+
+      @parser = OptionParser.send(:new)
       @parser.send(:parse!)
     end
 

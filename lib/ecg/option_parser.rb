@@ -1,30 +1,57 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require_relative 'context'
+require 'singleton'
 require_relative 'version'
 
 module ECG
-  class OptionParser
-    def initialize(args = [])
-      @args = args
+  class OptionParser < ::OptionParser
+    include Singleton
+    attr_reader :args, :options
+
+    def initialize
+      super
+
+      @args = ARGV.dup
       @options = { filepath: nil, trim_mode: '<>', values: {} }
+
+      on('-v', '--values Key=Value', <<~__DESC__) do |str|
+        Set the key-value mapping to be embedded in the template.
+      __DESC__
+
+        set_option_value(*str.split('=', 2))
+      end
+      on('-t', '--trim-mode MODE', <<~__DESC__) do |v|
+        Set ERB's trim_mode. Default is "<>".
+      __DESC__
+
+        @options[:trim_mode] = v
+      end
+      on_tail('-V', '--version', 'Print version information') do
+        puts ver
+        exit
+      end
+      on_tail('-h', '--help', 'Print this help message', &method(:print_help))
     end
 
-    def context
-      return @context if instance_variable_defined?(:@context)
+    def banner
+      'Usage: ecg [config.{json,yaml}] [options]'
+    end
 
-      parse!
-      @context = Context.new(@options)
+    undef_method :parse
+
+    def parse!
+      print_help(false) if @args.empty?
+
+      super(@args)
+      @options[:filepath] = filepath
+    end
+
+    def version
+      VERSION
     end
 
     private
-
-    def banner
-      <<~__BANNER__
-        Usage: ecg [config.{json,yaml}] [options]
-      __BANNER__
-    end
 
     def filepath
       print_help(false) if @args.length > 1
@@ -40,40 +67,8 @@ module ECG
       path
     end
 
-    def parse!
-      print_help(false) if @args.empty?
-
-      parser.parse!(@args)
-      @options[:filepath] = filepath
-      self
-    end
-
-    def parser # rubocop:disable Style/MethodLength
-      ::OptionParser.new do |opt|
-        opt.banner = banner
-        opt.version = VERSION
-
-        opt.on('-v', '--values Key=Value', <<~__DESC__) do |str|
-          Set the key-value mapping to be embedded in the template.
-        __DESC__
-
-          set_option_value(*str.split('=', 2))
-        end
-        opt.on('-t', '--trim-mode MODE', <<~__DESC__) do |v|
-          Set ERB's trim_mode. Default is "<>".
-        __DESC__
-          @options[:trim_mode] = v
-        end
-        opt.on('-V', '--version', 'Print version information') do
-          puts opt.ver
-          exit
-        end
-        opt.on('-h', '--help', 'Print this help message', &method(:print_help))
-      end
-    end
-
     def print_help(bool)
-      warn parser.help
+      Kernel.warn help
       exit bool
     end
 

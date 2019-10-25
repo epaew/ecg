@@ -4,5 +4,5 @@
 $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 require 'ecg'
 
-cmd = ECG::Command.new(ARGV)
+cmd = ECG::Command.new
 cmd.execute

@@ -5,12 +5,16 @@ require 'test_helper'
 module ECG
   class TestCommand < Test::Unit::TestCase
     setup do
+      @original_argv = ARGV
       @stdin = $stdin
       $stdout = @stdout = StringIO.new
       $stderr = @stderr = StringIO.new
     end
 
     teardown do
+      Object.send(:remove_const, :ARGV)
+      Object.const_set(:ARGV, @original_argv)
+
       $stdout = STDOUT
       $stderr = STDERR
     end
@@ -31,14 +35,17 @@ module ECG
     sub_test_case 'run without arguments' do
       def test_run_with_no_arguments
         assert_raise(SystemExit) { run_command }
-        assert_equal(@stderr.string, OptionParser.new.send(:parser).help)
+        assert_equal(@stderr.string, OptionParser.instance.help)
       end
     end
 
     private
 
     def run_command(*args)
-      @command = Command.new(args)
+      Object.send(:remove_const, :ARGV)
+      Object.const_set(:ARGV, args)
+
+      @command = Command.new
       @command.execute(@stdin, @stdout)
     end
   end
