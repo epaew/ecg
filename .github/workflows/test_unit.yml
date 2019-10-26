@@ -28,19 +28,21 @@ jobs:
       uses: actions/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
+    - name: Run bundle install
+      run: gem install bundler && bundle
+    - name: Run Rubocop
+      run: rubocop
     - name: Set GIT_BRANCH
       run: echo "##[set-env name=GIT_BRANCH;]${GITHUB_REF##*/}"
-    - name: Download and execute test-reporter
+    - name: Download and run test-reporter:before-build
       if: matrix.ruby == '2.6.x'
       run: |
         curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         chmod +x ./cc-test-reporter
         ./cc-test-reporter before-build
-    - name: Run bundle install
-      run: gem install bundler && bundle
     - name: Run Test
       run: rake
-    - name: Execute test-reporter
+    - name: Run test-reporter:after-build
       if: matrix.ruby == '2.6.x'
       run: |
         ./cc-test-reporter after-build
