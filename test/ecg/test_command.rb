@@ -5,29 +5,25 @@ require 'test_helper'
 module ECG
   class TestCommand < Test::Unit::TestCase
     setup do
-      @original_argv = ARGV
-      @stdin = $stdin
       $stdout = @stdout = StringIO.new
       $stderr = @stderr = StringIO.new
     end
 
     teardown do
-      Object.send(:remove_const, :ARGV)
-      Object.const_set(:ARGV, @original_argv)
-
+      $stdin = STDIN
       $stdout = STDOUT
       $stderr = STDERR
     end
 
     sub_test_case 'run with valid arguments' do
       def test_run_with_valid_arguments
-        @stdin = StringIO.new(<<~__ERB__)
+        $stdin = StringIO.new(<<~__ERB__)
           {"name":"<%= name %>"}
         __ERB__
 
-        run_command('--values', 'name=epaew')
+        run_command('--values', 'name=command')
         assert_equal(@stdout.string, <<~__RESULT__)
-          {"name":"epaew"}
+          {"name":"command"}
         __RESULT__
       end
     end
@@ -42,11 +38,9 @@ module ECG
     private
 
     def run_command(*args)
-      Object.send(:remove_const, :ARGV)
-      Object.const_set(:ARGV, args)
-
+      OptionParser.instance.instance_variable_set(:@args, args)
       @command = Command.new
-      @command.execute(@stdin, @stdout)
+      @command.execute
     end
   end
 end
