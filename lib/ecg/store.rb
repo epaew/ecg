@@ -2,14 +2,13 @@
 
 module ECG
   class Store
-    def initialize(hash)
-      map = hash.map { |k, v| [k.to_sym, transform_value(v)] }
-      @store = map.to_h
+    def initialize(values = {})
+      @values = values.map { |k, v| [k.to_sym, transform_value(v)] }.to_h
     end
 
     def initialize_copy(obj)
       super
-      @store = @store.dup
+      @values = @values.dup
     end
 
     def binding
@@ -17,30 +16,39 @@ module ECG
     end
 
     def inspect
-      detail = @store.map { |k, v| " @#{k}=#{v.inspect}" }.join(',')
+      detail = @values.map { |k, v| " @#{k}=#{v.inspect}" }.join(',')
       "#<#{self.class}:#{object_id << 1}#{detail}>"
     end
 
-    def method_missing(name, *args)
-      name = name.to_sym
+    def merge(*others)
+      others.inject(dup, &method(:deep_merge))
+    end
 
-      if @store.key?(name)
-        transform_value(@store[name])
-      elsif @store.respond_to?(name)
-        @store.public_send(name, *args)
+    def merge!(*others)
+      others.inject(self, &method(:deep_merge))
+    end
+
+    def method_missing(name, *args, &block)
+      if @values.key?(name)
+        @values[name]
+      elsif @values.respond_to?(name)
+        @values.public_send(name, *args, &block)
       else
         super
       end
     end
 
-    def respond_to_missing?(symbol, include_private = false)
-      symbol = symbol.to_sym
-
-      @store.key?(symbol) || @store.respond_to?(symbol) || super
+    def respond_to_missing?(name, include_private = false)
+      @values.key?(name) || @values.respond_to?(name) || super
     end
 
+    def store(key, value)
+      @values.store(key.to_sym, transform_value(value))
+    end
+    alias []= store
+
     def to_h
-      @store.transform_values(&method(:intransform_value))
+      @values.transform_values(&method(:intransform_value))
     end
 
     def to_json(*args)
@@ -55,6 +63,20 @@ module ECG
     end
 
     private
+
+    def deep_merge(source, other)
+      other.keys.each do |key|
+        value = transform_value(other[key])
+
+        if source[key].is_a?(Store) && value.is_a?(Store)
+          source[key].merge!(value)
+        elsif !value.nil?
+          source[key] = value
+        end
+      end
+
+      source
+    end
 
     def intransform_value(value)
       case value
