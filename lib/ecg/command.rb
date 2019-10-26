@@ -5,16 +5,18 @@ require_relative 'option_parser'
 
 module ECG
   class Command
-    def initialize(args)
-      @parser = OptionParser.new(args)
+    def initialize
+      @context = Context.instance
     end
 
-    def execute(input = $stdin, output = $stdout)
-      context = @parser.context
+    def execute
+      @context.parser.parse!
       # NOTE: ERB.new's non-keyword arguments are deprecated in 2.6
       # erb = ERB.new(input.read, trim_mode: context.trim_mode)
-      erb = ERB.new(input.read, nil, context.trim_mode)
-      output.puts erb.result(context.values.binding)
+      @context.targets.each do |input, output|
+        erb = ERB.new(input.read, nil, @context.trim_mode)
+        output.puts erb.result(@context.binding)
+      end
     end
   end
 end

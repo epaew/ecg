@@ -56,6 +56,41 @@ module ECG
       end
     end
 
+    sub_test_case '#merge' do
+      def test_simple_merge
+        assert_equal(@store.merge(key2: 'value2'),
+                     Store.new(key: 'value', key2: 'value2'))
+        assert_equal(@store, Store.new(key: 'value'))
+      end
+
+      def test_deep_merge_array
+        @store = Store.new(key: ['value'])
+        # NOTE: fully replace
+        assert_equal(@store.merge(key: %w[value2 value3]),
+                     Store.new(key: %w[value2 value3]))
+      end
+
+      def test_deep_merge_hash
+        @store = Store.new(root: { key: 'value' })
+        assert_equal(@store.merge(root: { key2: 'value2' }),
+                     Store.new(root: { key: 'value', key2: 'value2' }))
+      end
+
+      def test_deep_merge_store
+        @store = Store.new(root: { key: 'value' })
+        assert_equal(@store.merge(Store.new(root: { key2: 'value2' })),
+                     Store.new(root: { key: 'value', key2: 'value2' }))
+      end
+    end
+
+    sub_test_case '#merge!' do
+      def test_merge!
+        assert_equal(@store.merge!(key2: 'value2'),
+                     Store.new(key: 'value', key2: 'value2'))
+        assert_equal(@store, Store.new(key: 'value', key2: 'value2'))
+      end
+    end
+
     sub_test_case '#method_missing / #respond_to_missing?' do
       def test_respond_to
         assert_respond_to(@store, :key)

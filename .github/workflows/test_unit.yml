@@ -4,10 +4,9 @@ on:
   push:
     branches:
       - master
-      - develop
-    pull_request:
-      branches:
-        - master
+  pull_request:
+    branches:
+      - master
 
 env:
   CC_TEST_REPORTER_ID: bc8e53c4901d6b62bc7e92a83ebea3e5d232d42b6e0781b22a13076737331ceb
