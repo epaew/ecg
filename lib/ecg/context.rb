@@ -1,42 +1,47 @@
 # frozen_string_literal: true
 
+require 'singleton'
 require_relative 'store'
+require_relative 'plugin/load_file_values'
+require_relative 'plugin/load_option_values'
 
 module ECG
   class Context
-    attr_reader :trim_mode
+    include Singleton
+    prepend Plugin::LoadFileValues
+    prepend Plugin::LoadOptionValues
 
-    def initialize(filepath:, trim_mode:, values:)
-      @trim_mode = trim_mode
-      @values_file = filepath
-      @values_option = values
+    attr_reader :parser, :targets, :values
+
+    def initialize
+      @parser = OptionParser.instance
+      @targets = { $stdin => $stdout }
+      @values = Store.new
     end
 
-    def values
-      Store.new(merged_hash)
+    def binding
+      setup
+      super # NOTE: Kernel.#binding is private
+    end
+
+    def method_missing(name, *args, &block)
+      if @values.respond_to?(name)
+        @values.public_send(name, *args, &block)
+      else
+        super
+      end
+    end
+
+    def respond_to_missing?(name, include_private = false)
+      @values.respond_to?(name) || super
+    end
+
+    def trim_mode
+      @parser.trim_mode
     end
 
     private
 
-    def load_file(path)
-      case File.extname(path)
-      when '.json'
-        require 'json'
-        File.open(path) { |f| JSON.parse(f.read) }
-      when /\A\.ya?ml\z/
-        require 'yaml'
-        # NOTE: YAML.safe_load's non-keyword arguments are deprecated in 2.6
-        # File.open(path) { |f| YAML.safe_load(f.read, aliases: true) }
-        File.open(path) { |f| YAML.safe_load(f.read, [], [], true) }
-      else
-        raise ArgumentError,
-              "Cannot load file `#{path}`. Only JSON/YAML are allowed."
-      end
-    end
-
-    def merged_hash
-      hash = @values_file.nil? ? {} : load_file(@values_file)
-      hash.merge(@values_option)
-    end
+    def setup; end
   end
 end

@@ -11,10 +11,6 @@ module ECG
       @values = @values.dup
     end
 
-    def binding
-      super # NOTE: Kernel.#binding is private
-    end
-
     def inspect
       detail = @values.map { |k, v| " @#{k}=#{v.inspect}" }.join(',')
       "#<#{self.class}:#{object_id << 1}#{detail}>"
