@@ -28,7 +28,7 @@ jobs:
         GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_AUTH_TOKEN }}
     - name: Get gem version
       id: get_version
-      run: ruby -r './lib/ecg/version.rb' -e 'puts %(##[set-output name=version;]"#{ECG::VERSION}")'
+      run: ruby -r './lib/ecg/version.rb' -e 'puts %(##[set-output name=version;]#{ECG::VERSION})'
     - name: Create Release
       id: create_release
       uses: actions/create-release@master
