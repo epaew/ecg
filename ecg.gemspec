@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.summary     =
     'ecg is an ERB(eRuby) based, simple and powerful configration file generator for general purpose.'
   spec.description = spec.summary
-  spec.homepage    = 'https://github.com/epaew/ecg'
+  spec.homepage    = 'https://epaew.github.io/ecg'
   spec.license     = 'MIT'
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -22,8 +22,7 @@ Gem::Specification.new do |spec|
   if spec.respond_to?(:metadata)
     spec.metadata['allowed_push_host'] = 'https://rubygems.org'
   else
-    raise 'RubyGems 2.0 or newer is required to protect against ' \
-      'public gem pushes.'
+    raise 'RubyGems 2.0 or newer is required to protect against public gem pushes.'
   end
 
   # Specify which files should be added to the gem when it is released.
@@ -32,7 +31,7 @@ Gem::Specification.new do |spec|
     `git ls-files bin/ecg lib *.md LICENSE`.split("\n")
   end
   spec.bindir        = 'bin'
-  spec.executables   = %w[ecg] # written in ruby only.
+  spec.executables   = ['ecg'] # written in ruby only.
   spec.require_paths = ['lib']
 
   spec.add_development_dependency 'bundler'
