@@ -37,6 +37,9 @@ module ECG
       print_help(false) if @args.empty?
 
       super(@args)
+    rescue InvalidOption => e
+      warn e
+      print_help(false)
     end
 
     def version

@@ -57,6 +57,17 @@ module ECG
       end
     end
 
+    sub_test_case 'parse invalid option' do
+      def test_parse_with_no_arguments
+        assert_raise(SystemExit) { parse('--wrong') }
+        assert_equal(
+          @stderr.string,
+          "#{File.basename($PROGRAM_NAME, '.rb')}: invalid option: --wrong\n" \
+          "#{@parser.help}"
+        )
+      end
+    end
+
     private
 
     def parse(*args)
