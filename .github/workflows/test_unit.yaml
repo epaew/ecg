@@ -1,0 +1,51 @@
+name: Run TestUnit
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+  schedule:
+    - cron: '0 0 * * *'
+
+env:
+  CC_TEST_REPORTER_ID: bc8e53c4901d6b62bc7e92a83ebea3e5d232d42b6e0781b22a13076737331ceb
+
+jobs:
+  test:
+    name: Ruby ${{ matrix.ruby }}${{ (matrix.options && ' w/ JIT') || '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby:
+          - 2.5.x
+          - 2.6.x
+          - 2.7.x
+        options:
+          - ""
+          - --jit
+        exclude:
+          - ruby: 2.5.x
+            options: --jit
+    steps:
+    - name: Checkout codes
+      uses: actions/checkout@v2
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+
+    - name: Download cc-test-reporter
+      run: |
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
+
+    - name: Run bundle install
+      run: gem install bundler && bundle install
+    - name: Run tests
+      run: |
+        ./cc-test-reporter before-build
+        rake
+        ./cc-test-reporter after-build --coverage-input-type simplecov --exit-code $?
+      env:
+        RUBYOPT: ${{ matrix.options }}
