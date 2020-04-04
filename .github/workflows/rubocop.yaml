@@ -1,0 +1,24 @@
+name: Run Rubocop
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+
+jobs:
+  rubocop:
+    name: Rubocop
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout codes
+      uses: actions/checkout@v2
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: 2.7.x
+
+    - name: Run bundle install
+      run: gem install bundler && bundle install
+    - name: Run Rubocop
+      run: rubocop
