@@ -7,7 +7,7 @@ require 'ecg/version'
 Gem::Specification.new do |spec|
   spec.name                  = 'ecg'
   spec.version               = ECG::VERSION
-  spec.required_ruby_version = '>= 2.4.0'
+  spec.required_ruby_version = '>= 2.5.0'
 
   spec.authors     = ['epaew']
   spec.email       = ['epaew.333@gmail.com']
@@ -38,7 +38,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'rubocop'
-  spec.add_development_dependency 'simplecov'
+  spec.add_development_dependency 'simplecov', '< 0.18'
   spec.add_development_dependency 'simplecov-console'
   spec.add_development_dependency 'test-unit', '~> 3.2'
   spec.add_development_dependency 'test-unit-rr', '~> 1.0'
